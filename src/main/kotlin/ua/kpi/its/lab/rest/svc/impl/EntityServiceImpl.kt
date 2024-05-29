@@ -2,48 +2,46 @@ package ua.kpi.its.lab.rest.svc.impl
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import ua.kpi.its.lab.rest.dto.ScientificArticleResponse
+import ua.kpi.its.lab.rest.dto.ArticleResponse
 import ua.kpi.its.lab.rest.dto.JournalRequest
 import ua.kpi.its.lab.rest.dto.JournalResponse
-import ua.kpi.its.lab.rest.entity.ScientificArticle
+import ua.kpi.its.lab.rest.entity.Article
 import ua.kpi.its.lab.rest.entity.Journal
 import ua.kpi.its.lab.rest.repo.JournalRepository
 import ua.kpi.its.lab.rest.svc.JournalService
-import java.math.BigDecimal
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.*
-import kotlin.jvm.optionals.getOrElse
 
 @Service
 class JournalServiceImpl @Autowired constructor(
     private val repository: JournalRepository
 ) : JournalService {
     override fun create(journal: JournalRequest): JournalResponse {
-        val articles = journal.articles.map {
-            ScientificArticle(
-                title = it.title,
-                author = it.author,
-                writingDate = this.stringToDate(it.writingDate),
-                wordCount = it.wordCount,
-                citationCount = it.citationCount,
-                isOriginalLanguage = it.isOriginalLanguage
-            )
-        }.toMutableList()
-        val newJournal = Journal(
-            name = journal.name,
-            theme = journal.theme,
-            language = journal.language,
-            foundingDate = this.stringToDate(journal.foundingDate),
-            issn = journal.issn,
-            recommendedPrice = this.stringToPrice(journal.recommendedPrice),
-            isPeriodic = journal.isPeriodic,
-            articles = articles
+        val article=journal.article
+        val newArticle = Article(
+            title = journal.article.title,
+            author = journal.article.author,
+            writingDate = stringToDate(journal.article.writingDate),
+            wordCount = journal.article.wordCount,
+            referenceCount = journal.article.referenceCount,
+            originalLanguage = journal.article.originalLanguage,
+            journal = null // This will be set later
         )
-        newJournal.articles.forEach { it.journal = newJournal }
-        val savedJournal = this.repository.save(newJournal)
-        return this.journalEntityToDto(savedJournal)
+        var newJournal = Journal(
+            name = journal.name,
+            topic = journal.topic,
+            language = journal.language,
+            foundationDate = stringToDate(journal.foundationDate),
+            issn = journal.issn,
+            recommendedPrice = journal.recommendedPrice,
+            periodic = journal.periodic,
+            article = newArticle
+        )
+        newArticle.journal = newJournal
+        newJournal = this.repository.save(newJournal)
+        return this.journalEntityToDto(newJournal)
     }
 
     override fun read(): List<JournalResponse> {
@@ -57,32 +55,27 @@ class JournalServiceImpl @Autowired constructor(
 
     override fun updateById(id: Long, journal: JournalRequest): JournalResponse {
         val oldJournal = this.getJournalById(id)
-
+        val article=journal.article
+        val newArticle = Article(
+            title = journal.article.title,
+            author = journal.article.author,
+            writingDate = stringToDate(journal.article.writingDate),
+            wordCount = journal.article.wordCount,
+            referenceCount = journal.article.referenceCount,
+            originalLanguage = journal.article.originalLanguage,
+            journal = oldJournal
+        )
         oldJournal.apply {
             name = journal.name
-            theme = journal.theme
+            topic = journal.topic
             language = journal.language
-            foundingDate = this@JournalServiceImpl.stringToDate(journal.foundingDate)
+            foundationDate = stringToDate(journal.foundationDate)
             issn = journal.issn
-            recommendedPrice = this@JournalServiceImpl.stringToPrice(journal.recommendedPrice)
-            isPeriodic = journal.isPeriodic
+            recommendedPrice = journal.recommendedPrice
+            periodic = journal.periodic
         }
-
-        oldJournal.articles.clear()
-        oldJournal.articles.addAll(journal.articles.map {
-            ScientificArticle(
-                title = it.title,
-                author = it.author,
-                writingDate = this@JournalServiceImpl.stringToDate(it.writingDate),
-                wordCount = it.wordCount,
-                citationCount = it.citationCount,
-                isOriginalLanguage = it.isOriginalLanguage,
-                journal = oldJournal
-            )
-        })
-
-        val newJournal = this.repository.save(oldJournal)
-        return this.journalEntityToDto(newJournal)
+        val updatedJournal = this.repository.save(oldJournal)
+        return this.journalEntityToDto(updatedJournal)
     }
 
     override fun deleteById(id: Long): JournalResponse {
@@ -92,8 +85,8 @@ class JournalServiceImpl @Autowired constructor(
     }
 
     private fun getJournalById(id: Long): Journal {
-        return this.repository.findById(id).getOrElse {
-            throw IllegalArgumentException("Journal not found by id = $id")
+        return this.repository.findById(id).orElseThrow {
+            IllegalArgumentException("Journal not found by id = $id")
         }
     }
 
@@ -101,23 +94,25 @@ class JournalServiceImpl @Autowired constructor(
         return JournalResponse(
             id = journal.id,
             name = journal.name,
-            theme = journal.theme,
+            topic = journal.topic,
             language = journal.language,
-            foundingDate = this.dateToString(journal.foundingDate),
+            foundationDate = dateToString(journal.foundationDate),
             issn = journal.issn,
-            recommendedPrice = this.priceToString(journal.recommendedPrice),
-            isPeriodic = journal.isPeriodic,
-            articles = journal.articles.map {
-                ScientificArticleResponse(
-                    id = it.id,
-                    title = it.title,
-                    author = it.author,
-                    writingDate = this.dateToString(it.writingDate),
-                    wordCount = it.wordCount,
-                    citationCount = it.citationCount,
-                    isOriginalLanguage = it.isOriginalLanguage
-                )
-            }
+            recommendedPrice = journal.recommendedPrice,
+            periodic = journal.periodic,
+            article = this.articleEntityToDto(journal.article)
+        )
+    }
+
+    private fun articleEntityToDto(article: Article): ArticleResponse {
+        return ArticleResponse(
+            id = article.id,
+            title = article.title,
+            author = article.author,
+            writingDate = dateToString(article.writingDate),
+            wordCount = article.wordCount,
+            referenceCount = article.referenceCount,
+            originalLanguage = article.originalLanguage
         )
     }
 
@@ -128,12 +123,12 @@ class JournalServiceImpl @Autowired constructor(
     }
 
     private fun stringToDate(date: String): Date {
-        val dateTime = LocalDateTime.parse(date, DateTimeFormatter.ISO_DATE_TIME)
-        val instant = dateTime.toInstant(ZoneOffset.UTC)
-        return Date.from(instant)
+        return try {
+            val dateTime = LocalDateTime.parse(date, DateTimeFormatter.ISO_DATE_TIME)
+            val instant = dateTime.toInstant(ZoneOffset.UTC)
+            Date.from(instant)
+        } catch (e: Exception) {
+            Date() // Return current date as fallback
+        }
     }
-
-    private fun priceToString(price: BigDecimal): String = price.toString()
-
-    private fun stringToPrice(price: String): BigDecimal = BigDecimal(price)
 }

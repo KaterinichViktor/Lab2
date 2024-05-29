@@ -1,7 +1,6 @@
 package ua.kpi.its.lab.rest.entity
 
 import jakarta.persistence.*
-import java.math.BigDecimal
 import java.util.*
 
 @Entity
@@ -11,43 +10,44 @@ class Journal(
     var name: String,
 
     @Column
-    var theme: String,
+    var topic: String,
 
     @Column
     var language: String,
 
     @Column
-    var foundingDate: Date,
+    var foundationDate: Date,
 
     @Column
     var issn: String,
 
     @Column
-    var recommendedPrice: BigDecimal,
+    var recommendedPrice: String,
 
     @Column
-    var isPeriodic: Boolean,
+    var periodic: Boolean,
 
-    @OneToMany(cascade = [CascadeType.ALL], mappedBy = "journal")
-    var articles: MutableList<ScientificArticle>
+    @OneToOne(cascade = [CascadeType.ALL])
+    @JoinColumn(name = "article_id", referencedColumnName = "id")
+    var article: Article
 ) : Comparable<Journal> {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     var id: Long = -1
 
     override fun compareTo(other: Journal): Int {
-        val equal = this.name == other.name && this.foundingDate.time == other.foundingDate.time
+        val equal = this.name == other.name && this.foundationDate.time == other.foundationDate.time
         return if (equal) 0 else 1
     }
 
     override fun toString(): String {
-        return "Journal(name=$name, foundingDate=$foundingDate, articles=$articles)"
+        return "Journal(name=$name, foundationDate=$foundationDate, article=$article)"
     }
 }
 
 @Entity
-@Table(name = "scientific_articles")
-class ScientificArticle(
+@Table(name = "articles")
+class Article(
     @Column
     var title: String,
 
@@ -61,25 +61,24 @@ class ScientificArticle(
     var wordCount: Int,
 
     @Column
-    var citationCount: Int,
+    var referenceCount: Int,
 
     @Column
-    var isOriginalLanguage: Boolean,
+    var originalLanguage: Boolean,
 
-    @ManyToOne
-    @JoinColumn(name = "journal_id", referencedColumnName = "id")
+    @OneToOne(mappedBy = "article")
     var journal: Journal? = null
-): Comparable<ScientificArticle> {
+) : Comparable<Article> {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     var id: Long = -1
 
-    override fun compareTo(other: ScientificArticle): Int {
+    override fun compareTo(other: Article): Int {
         val equal = this.title == other.title && this.writingDate.time == other.writingDate.time
         return if (equal) 0 else 1
     }
 
     override fun toString(): String {
-        return "ScientificArticle(title=$title, writingDate=$writingDate, wordCount=$wordCount)"
+        return "Article(title=$title, writingDate=$writingDate)"
     }
 }

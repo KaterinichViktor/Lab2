@@ -13,7 +13,6 @@ import org.springframework.web.servlet.function.ServerResponse
 import org.springframework.web.servlet.function.body
 import org.springframework.web.servlet.function.router
 import ua.kpi.its.lab.rest.dto.JournalRequest
-import ua.kpi.its.lab.rest.dto.JournalResponse
 import ua.kpi.its.lab.rest.svc.JournalService
 import java.text.SimpleDateFormat
 

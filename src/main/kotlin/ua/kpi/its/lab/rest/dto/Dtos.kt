@@ -2,42 +2,42 @@ package ua.kpi.its.lab.rest.dto
 
 data class JournalRequest(
     var name: String,
-    var theme: String,
+    var topic: String,
     var language: String,
-    var foundingDate: String,
+    var foundationDate: String,
     var issn: String,
     var recommendedPrice: String,
-    var isPeriodic: Boolean,
-    var articles: List<ScientificArticleRequest>
+    var periodic: Boolean,
+    var article: ArticleRequest
 )
 
 data class JournalResponse(
     var id: Long,
     var name: String,
-    var theme: String,
+    var topic: String,
     var language: String,
-    var foundingDate: String,
+    var foundationDate: String,
     var issn: String,
     var recommendedPrice: String,
-    var isPeriodic: Boolean,
-    var articles: List<ScientificArticleResponse>
+    var periodic: Boolean,
+    var article: ArticleResponse
 )
 
-data class ScientificArticleRequest(
+data class ArticleRequest(
     var title: String,
     var author: String,
     var writingDate: String,
     var wordCount: Int,
-    var citationCount: Int,
-    var isOriginalLanguage: Boolean
+    var referenceCount: Int,
+    var originalLanguage: Boolean
 )
 
-data class ScientificArticleResponse(
+data class ArticleResponse(
     var id: Long,
     var title: String,
     var author: String,
     var writingDate: String,
     var wordCount: Int,
-    var citationCount: Int,
-    var isOriginalLanguage: Boolean
+    var referenceCount: Int,
+    var originalLanguage: Boolean
 )
